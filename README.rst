@@ -2,81 +2,146 @@
 pytest fixture "xfiles"
 =======================
 
-Pytest fixtures providing data loaded from test function, test module or test package related data file (JSON, YAML, other can be added).
+Each test function deserves a companion - a small or large (YAML, JSON or other) file siting beside.
 
-Motivation
-==========
-Some tests require complex or extended amount of data and it is cumbersome to keep the testing code and the data in the same python file.
+Providing such data can be as simple as::
 
-This repository provides pytest fixtures called `xfiles`, allowing to keep the data in external files while allowing to get them loaded into relevant test very easily.
-
-Typical format for data files is `yaml`, sometimes `json`, the solution is easy to extend for other formats.
-
-Have `tests/test_httpbin.py` file::
-
-    import requests
+    """Test Romeo y Julieta by Shakespeare.
+    """
 
 
-    def test_get(function_yaml):
-        url = function_yaml["url"]
-        resp = requests.get(url)
-        assert resp.ok
-        data = resp.json()
-        expected = function_yaml["expected"]
-        assert data["args"] == expected["args"]
-        exp_headers = expected["headers"]
-        data_headers = data["headers"]
-        # check presence of headers
-        for header_name in exp_headers["exact_value"]:
-            assert header_name in data_headers
-        for header_name in exp_headers["prefix_match"]:
-            assert header_name in data_headers
-        # check values of headers
-        for header_name, exp_value in exp_headers["exact_value"].items():
-            assert data_headers[header_name] == exp_value
-        # check prefix
-        for header_name, exp_value in exp_headers["prefix_match"].items():
-            assert data_headers[header_name].startswith(exp_value)
+    def test_romeo(function_yaml):
+        print(function_yaml)
 
-Value of `function_yaml` is loaded (by xfile fixture) from `tests/test_httpbin.get.yaml` file::
 
-    url: "https://httpbin.org/get"
-    expected:
-        args: {}
-        headers:
-            exact_value:
-                Accept: "*/*"
-                Accept-Encoding: gzip, deflate
-                Connection: close 
-                Host: httpbin.org 
-            prefix_match:
-                User-Agent: "python-requests/"
+    def test_julieta(function_yaml):
+        print(function_yaml)
 
-If we add another test into `tests/test_httpbin.py` file::
 
-    def test_status(function_yaml):
-        url_pattern = function_yaml["url"]
-        for code, exp_reason in function_yaml["codes"].items():
-            url = url_pattern.format(code=code)
-            resp = requests.get(url)
-            assert resp.status_code == code
-            assert resp.reason == exp_reason
+    def test_play(module_yaml):
+        print(module_yaml)
 
-and related `tests/test_httpbin.status.yaml`::
 
-    url: https://httpbin.org/status/{code}
-    codes:
-        200: OK
-        201: CREATED
-        202: ACCEPTED
-        203: NON AUTHORITATIVE INFORMATION
-        204: NO CONTENT
-        205: RESET CONTENT
-        206: PARTIAL CONTENT
-        207: MULTI STATUS
-        226: IM USED
+    def test_author(package_yaml):
+        print(package_yaml)
 
-one may wonder, how it comes, that even though both tests use the same fixture `function_yaml`, the data provided by this fixture clearly differs for each test. The trick is, that each time, the file name to load data from is derived using the test function name being called.
+Run the test::
+
+    $ pytest -sv tests/shakespeare/test_romeoyjulieta.py
+    ============================= test session starts ==============================
+    ...
+
+    tests/shakespeare/test_romeoyjulieta.py::test_romeo {'name': 'Romeo', 'mindmap': ['Julieta', 'Julieta', 'Julieta'], 'spot': 'ladder'}
+    PASSED
+    tests/shakespeare/test_romeoyjulieta.py::test_julieta {'name': 'Julieta', 'mindmap': ['Romeo', 'Romeo', 'Romeo'], 'spot': 'balcony'}
+    PASSED
+    tests/shakespeare/test_romeoyjulieta.py::test_play {'story': 'Romeo y Julieta', 'main_characters': ['Romeo', 'Julieta'], 'location': 'Verona'}
+    PASSED
+    tests/shakespeare/test_romeoyjulieta.py::test_author {'name': 'William', 'surname': 'Shakespeare'}
+    PASSED
+
+    =========================== 4 passed in 0.03 seconds ===========================
+
+Where are the files?::
+
+    $ ls tests/shakespeare/test_romeoyjulieta.*
+    tests/shakespeare/test_romeoyjulieta.julieta.yaml
+    tests/shakespeare/test_romeoyjulieta.py
+    tests/shakespeare/test_romeoyjulieta.romeo.yaml
+    tests/shakespeare/test_romeoyjulieta.yaml
+
+and one more (for the whole package `tests.shakespeare`)::
+
+    $ ls tests/shakespeare/__init__.yaml
+    tests/shakespeare/__init__.yaml
+
+File formats supported
+======================
+The sample above shows use of YAML formatted data. Out of the box, JSON format is also supported via `function_json`, `module_json` and `package_json` fixtures.
+
+More formats can be supported (see later).
+
+The `function`, the `module` and the `package`
+==============================================
+
+The file `tests/shakespeare/__init__.py` defines a test *package*.
+
+The file `tests/shakespeare/test_romeoyjulieta` is a test *module*
+
+The `def test_romeo` as in::
+
+    def test_romeo(function_yaml):
+        print(function_yaml)
+
+defines a test *function*.
+
+Currently there is no notion of test *class* as I did not need it. It may appear later on.
+
+Names of data files
+===================
+Data file names are derived from related object (package, module, function) and use format specific extentions (`.json`, `.yaml`, special `._x_`, other can be added).
+
+Package data file has name `__init__.py` with extension changed to format specific one, e.g. `__init__.json`.
+
+Module data file has name such as `test_romeoyjulieta.py` with extension changed to format specific one, e.g. `test_romeoyjulieta.json`.
+
+In case of test function, test function name must be added. To make files more readable, the `test_` part of the function is removed. For `test_romeo` function can be e.g. `test_romeoyjulieta.romeo.json`.
+
+The files are typically in the same directory as relevant python test suite code.
+
+What are the `._x_` files?
+==========================
+There are special fixtures `function_xfile`, `module_xfile` and `package_xfile`, which only return path to a file with extension `._x_` (and do not attempt to load the content).
+
+The `._x_` files are used as base for implementing other fixtures, e.g. as for JSON::
+
+    @pytest.fixture(scope="function")
+    def function_json(function_xfile):
+        path = function_xfile.with_suffix(".json")
+        with path.open(encoding="utf-8") as f:
+            import json
+            return json.load(f)
+
+As shown, the `function_json` simply takes the `._x_` file path, replaces the extension with it's own `.json` and return data loaded from such file.
+
+Adding support for other data formats (e.g. CSV)
+================================================
+Following the `function_json` example above, we may load data from any other data file, e.g. for `.csv`::
+
+    from csv import reader
+
+    import pytest
+
+
+    @pytest.fixture(scope="function")
+    def function_csv(function_xfile):
+        path = function_xfile.with_suffix(".csv")
+        with path.open(encoding="utf-8") as f:
+            return list(reader(f))
+
+
+    def test_codes(function_csv):
+        print(function_csv)
+
+.. warning::
+
+    Unlike the `{function,module,package}_json` and `{function,module,package}_yaml` fixtures, the `function_csv` (and all the variants) fixture is not provided by this pytest plugin.
+
+    Such fixture is intentionally not implemented as it shall be easy to implement it using your prefered extension, delimiter, encoding, type of returned object (data, iterator...) etc.
+
+Creating fixtures based on provided data
+========================================
+It is easy to take any of data availalbe and use it to create object of your preference. E.g. assuming that the `package_yaml` returns information about author in form of dictionary with keas "name" and "surname", one can create fixture `classy_author` returning specific class instance. Put following into `conftest.py`::
+
+    @pytest.fixture(scope="module")
+    def classy_author(package_yaml):
+        return Author(package_yaml["name"], package_yaml["surname"])
+
+and use it from test `test_classy_author.py`::
+
+    def test_custom_fixture(classy_author):
+        print(classy_author.full_name)
+
 
 Fixtures provided
 =================
