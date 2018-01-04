@@ -2,7 +2,7 @@
 pytest fixture "xfiles"
 =======================
 
-Each test function deserves a companion - a small or large (YAML, JSON or other) file siting beside.
+Each test function deserves a companion - a small or large (YAML, JSON or other) file sitting beside.
 
 Providing such data can be as simple as::
 
@@ -59,27 +59,27 @@ File formats supported
 ======================
 The sample above shows use of YAML formatted data. Out of the box, JSON format is also supported via `function_json`, `module_json` and `package_json` fixtures.
 
-More formats can be supported (see later).
+More formats can be supported (see below).
 
 The `function`, the `module` and the `package`
 ==============================================
 
-The file `tests/shakespeare/__init__.py` defines a test *package*.
+The file `tests/shakespeare/__init__.py` defines a test **package**.
 
-The file `tests/shakespeare/test_romeoyjulieta` is a test *module*
+The file `tests/shakespeare/test_romeoyjulieta` is a test **module**
 
 The `def test_romeo` as in::
 
     def test_romeo(function_yaml):
         print(function_yaml)
 
-defines a test *function*.
+defines a test **function**.
 
-Currently there is no notion of test *class* as I did not need it. It may appear later on.
+Currently there is no notion of test **class** as I did not need it. It may appear later on.
 
 Names of data files
 ===================
-Data file names are derived from related object (package, module, function) and use format specific extentions (`.json`, `.yaml`, special `._x_`, other can be added).
+Data file names are derived from related object (package, module, function) and use format specific extensions (`.json`, `.yaml`, special `._x_`, other can be added).
 
 Package data file has name `__init__.py` with extension changed to format specific one, e.g. `__init__.json`.
 
@@ -102,7 +102,7 @@ The `._x_` files are used as base for implementing other fixtures, e.g. as for J
             import json
             return json.load(f)
 
-As shown, the `function_json` simply takes the `._x_` file path, replaces the extension with it's own `.json` and return data loaded from such file.
+As shown, the `function_json` simply takes the `._x_` file path, replaces the extension with it's own `.json` and returns data loaded from such file.
 
 Adding support for other data formats (e.g. CSV)
 ================================================
@@ -131,7 +131,17 @@ Following the `function_json` example above, we may load data from any other dat
 
 Creating fixtures based on provided data
 ========================================
-It is easy to take any of data availalbe and use it to create object of your preference. E.g. assuming that the `package_yaml` returns information about author in form of dictionary with keas "name" and "surname", one can create fixture `classy_author` returning specific class instance. Put following into `conftest.py`::
+It is easy to take any of data availalbe and use it to create object of your preference. E.g. assuming that the `package_yaml` returns information about author in form of dictionary with keys "name" and "surname", one can create fixture `classy_author` returning specific class instance. Put following into `conftest.py`::
+
+    class Author(object):
+        def __init__(self, name, surname):
+            self.name = name
+            self.surname = surname
+
+        @property
+        def full_name(self):
+            return "{self.name} {self.surname}".format(self=self)
+
 
     @pytest.fixture(scope="module")
     def classy_author(package_yaml):
@@ -145,34 +155,20 @@ and use it from test `test_classy_author.py`::
 
 Fixtures provided
 =================
+Here is summary of fixtures provided. In all cases we assume we have `tests/sub/test_thing.py` with a test function `test_fun` and all required data files are available.
+
 `{scope}_xfile` family
 ----------------------
-Having `tests/sub/test_thing.py` with a test function `test_fun`, following fixtures would return path to an X-files as follows:
+Each fixture provides path to a file with base name derived from current function, module or package and with an extension `"._x_"`:
 
 - `function_xfile`: `tests/sub/test_thing.test_fun._x_`
 - `module_xfile`: `tests/sub/test_thing._x_`
 - `package_xfile`: `tests/sub/__init__._x_`
 
-Each fixture provides path to a file with base name derived from current function, module or package and with an extension `"._x_"`.
-
-
-This fixture is not usually used directly, but is used to derive another fixture loading data from a file with specific extension.
-
-An example of derived fixture can be existing fixture `function_json`::
-
-    @pytest.fixture(scope="function")
-    def function_json(function_xfile):
-        path = function_xfile.with_suffix(".json")
-        with path.open(encoding="utf-8") as f:
-            import json
-            return json.load(f)
-
-The fixture takes advantage of the filename calculated for given function, replaces extension with
-`.json`, loads the data from such a file and returns it.
 
 `{scope}_json` family
 ---------------------
-Having `tests/sub/test_thing.py` with a test function `test_fun`, following fixtures would return data loaded from JSON files as follows:
+Fixtures provide data loaded from the JSON formatted files:
 
 - `function_json`: `tests/sub/test_thing.test_fun.json`
 - `module_json`: `tests/sub/test_thing.json`
@@ -181,7 +177,7 @@ Having `tests/sub/test_thing.py` with a test function `test_fun`, following fixt
 
 `{scope}_yaml` family
 ---------------------
-Having `tests/sub/test_thing.py` with a test function `test_fun`, following fixtures would return data loaded from YAML files as follows:
+Fixtures provide data loaded from the YAML formatted files:
 
 - `function_yaml`: `tests/sub/test_thing.test_fun.yaml`
 - `module_yaml`: `tests/sub/test_thing.yaml`
