@@ -4,7 +4,9 @@ pytest fixture "xfiles"
 
 Each test function deserves a companion - a small or large (YAML, JSON or other) file sitting beside.
 
-Providing such data can be as simple as::
+Providing such data can be as simple as:
+
+.. code-block:: python
 
     """Test Romeo y Julieta by Shakespeare.
     """
@@ -25,7 +27,9 @@ Providing such data can be as simple as::
     def test_author(package_yaml):
         print(package_yaml)
 
-Run the test::
+Run the test:
+
+.. code-block:: bash
 
     $ pytest -sv tests/shakespeare/test_romeoyjulieta.py
     ============================= test session starts ==============================
@@ -42,7 +46,9 @@ Run the test::
 
     =========================== 4 passed in 0.03 seconds ===========================
 
-Where are the files?::
+Where are the files?
+
+.. code-block:: bash
 
     $ ls tests/shakespeare/test_romeoyjulieta.*
     tests/shakespeare/test_romeoyjulieta.julieta.yaml
@@ -50,7 +56,9 @@ Where are the files?::
     tests/shakespeare/test_romeoyjulieta.romeo.yaml
     tests/shakespeare/test_romeoyjulieta.yaml
 
-and one more (for the whole package `tests.shakespeare`)::
+and one more (for the whole package `tests.shakespeare`):
+
+.. code-block:: bash
 
     $ ls tests/shakespeare/__init__.yaml
     tests/shakespeare/__init__.yaml
@@ -68,10 +76,12 @@ The file `tests/shakespeare/__init__.py` defines a test **package**.
 
 The file `tests/shakespeare/test_romeoyjulieta` is a test **module**
 
-The `def test_romeo` as in::
+The `def test_romeo` as in:
 
-    def test_romeo(function_yaml):
-        print(function_yaml)
+.. code-block:: python
+
+   def test_romeo(function_yaml):
+       print(function_yaml)
 
 defines a test **function**.
 
@@ -93,7 +103,9 @@ What are the `._x_` files?
 ==========================
 There are special fixtures `function_xfile`, `module_xfile` and `package_xfile`, which only return path to a file with extension `._x_` (and do not attempt to load the content).
 
-The `._x_` files are used as base for implementing other fixtures, e.g. as for JSON::
+The `._x_` files are used as base for implementing other fixtures, e.g. as for JSON:
+
+.. code-block:: python
 
     @pytest.fixture(scope="function")
     def function_json(function_xfile):
@@ -106,7 +118,9 @@ As shown, the `function_json` simply takes the `._x_` file path, replaces the ex
 
 Adding support for other data formats (e.g. CSV)
 ================================================
-Following the `function_json` example above, we may load data from any other data file, e.g. for `.csv`::
+Following the `function_json` example above, we may load data from any other data file, e.g. for `.csv`:
+
+.. code-block:: python
 
     from csv import reader
 
@@ -131,7 +145,9 @@ Following the `function_json` example above, we may load data from any other dat
 
 Creating fixtures based on provided data
 ========================================
-It is easy to take any of data availalbe and use it to create object of your preference. E.g. assuming that the `package_yaml` returns information about author in form of dictionary with keys "name" and "surname", one can create fixture `classy_author` returning specific class instance. Put following into `conftest.py`::
+It is easy to take any of data availalbe and use it to create object of your preference. E.g. assuming that the `package_yaml` returns information about author in form of dictionary with keys "name" and "surname", one can create fixture `classy_author` returning specific class instance. Put following into `conftest.py`:
+
+.. code-block:: python
 
     class Author(object):
         def __init__(self, name, surname):
@@ -147,7 +163,9 @@ It is easy to take any of data availalbe and use it to create object of your pre
     def classy_author(package_yaml):
         return Author(package_yaml["name"], package_yaml["surname"])
 
-and use it from test `test_classy_author.py`::
+and use it from test `test_classy_author.py`:
+
+.. code-block:: python
 
     def test_custom_fixture(classy_author):
         print(classy_author.full_name)
