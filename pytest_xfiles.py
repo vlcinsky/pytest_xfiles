@@ -29,7 +29,8 @@ def package_xfile(request):
 def function_yaml(function_xfile):
     path = function_xfile.with_suffix(".yaml")
     with path.open(encoding="utf-8") as f:
-        import yaml
+        from ruamel.yaml import YAML
+        yaml = YAML()
         return yaml.load(f)
 
 
@@ -37,7 +38,8 @@ def function_yaml(function_xfile):
 def module_yaml(module_xfile):
     path = module_xfile.with_suffix(".yaml")
     with path.open(encoding="utf-8") as f:
-        import yaml
+        from ruamel.yaml import YAML
+        yaml = YAML()
         return yaml.load(f)
 
 
@@ -45,7 +47,8 @@ def module_yaml(module_xfile):
 def package_yaml(package_xfile):
     path = package_xfile.with_suffix(".yaml")
     with path.open(encoding="utf-8") as f:
-        import yaml
+        from ruamel.yaml import YAML
+        yaml = YAML()
         return yaml.load(f)
 
 

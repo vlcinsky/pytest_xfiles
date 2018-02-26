@@ -200,3 +200,9 @@ Fixtures provide data loaded from the YAML formatted files:
 - `function_yaml`: `tests/sub/test_thing.test_fun.yaml`
 - `module_yaml`: `tests/sub/test_thing.yaml`
 - `package_yaml`: `tests/sub/__init__.yaml`
+
+Note on YAML package and YAML version
+=====================================
+Switched from `pyyaml` to `ruamel.yaml` as it supports YAML version 1.2.
+
+If you require YAML files using version 1.1, use `% YAML 1.1` in your YAML file.
